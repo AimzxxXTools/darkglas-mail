@@ -1,57 +1,671 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DarkGlass Mail</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>DarkGlass Mail — Email Sementara</title>
+  <meta name="description" content="Temp-Mail dengan tema DarkGlass: email sementara real-time, copy, QR code, kustom nama." />
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons (CDN) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- QRCode.js (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+          colors: {
+            glass: { 50: 'rgba(255,255,255,0.05)', 100: 'rgba(255,255,255,0.08)', 200: 'rgba(255,255,255,0.12)' },
+            neon: { DEFAULT: '#7c3aed', soft: '#a78bfa', cyan: '#22d3ee' }
+          }
+        }
+      }
+    };
+  </script>
+
   <style>
+    /* ============================================================
+       DarkGlass — Glassmorphism bernuansa gelap
+       ============================================================ */
     :root {
-      --bg: #0f111a;
-      --glass: rgba(255, 255, 255, 0.05);
-      --glass-border: rgba(255, 255, 255, 0.1);
-      --text: #e2e8f0;
-      --accent: #38bdf8;
+      --glass-bg: rgba(17, 19, 30, 0.55);
+      --glass-bg-strong: rgba(23, 26, 41, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.10);
+      --glass-border-glow: rgba(167, 139, 250, 0.35);
+      --accent: #a78bfa;
+      --accent-2: #22d3ee;
+      --text: #e7e9f2;
+      --text-dim: #9aa0b5;
     }
+
+    * { -webkit-tap-highlight-color: transparent; }
+
+    html {
+      scroll-behavior: smooth;
+      overscroll-behavior-y: none;
+      overscroll-behavior-x: none;
+    }
+
     body {
-      background-color: var(--bg);
+      font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      background-color: #07080f;
       color: var(--text);
-      font-family: system-ui, sans-serif;
-      margin: 0; padding: 20px;
-      display: flex; justify-content: center; align-items: center; min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      overscroll-behavior: none;
     }
-    .container {
-      background: var(--glass);
-      backdrop-filter: blur(16px);
+
+    /* Latar aurora + noise */
+    .bg-aurora { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+    .bg-aurora::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(60rem 40rem at 15% 10%, rgba(124, 58, 237, 0.22), transparent 60%),
+        radial-gradient(50rem 35rem at 85% 20%, rgba(34, 211, 238, 0.14), transparent 60%),
+        radial-gradient(55rem 45rem at 50% 95%, rgba(236, 72, 153, 0.12), transparent 60%),
+        #07080f;
+    }
+    .bg-aurora::after {
+      content: ''; position: absolute; inset: 0; opacity: .35;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+    .blob {
+      position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .5;
+      animation: floatBlob 18s ease-in-out infinite alternate;
+    }
+    .blob-1 { width: 26rem; height: 26rem; background: rgba(124,58,237,.35); top: -6rem; left: -8rem; }
+    .blob-2 { width: 22rem; height: 22rem; background: rgba(34,211,238,.22); bottom: -8rem; right: -6rem; animation-delay: -6s; }
+    .blob-3 { width: 18rem; height: 18rem; background: rgba(236,72,153,.18); top: 40%; left: 55%; animation-delay: -12s; }
+    @keyframes floatBlob {
+      0% { transform: translate3d(0,0,0) scale(1); }
+      100% { transform: translate3d(3rem,-2rem,0) scale(1.12); }
+    }
+    @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
+
+    /* Kartu frosted glass */
+    .glass {
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      backdrop-filter: blur(18px) saturate(140%);
       border: 1px solid var(--glass-border);
-      padding: 30px; border-radius: 16px; width: 100%; max-width: 500px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      border-radius: 1.25rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      position: relative;
     }
-    h1 { font-size: 1.5rem; margin-top: 0; color: var(--accent); text-align: center; }
-    .email-box {
-      background: rgba(0, 0, 0, 0.2); padding: 12px; border-radius: 8px;
-      border: 1px solid var(--glass-border); text-align: center; font-family: monospace;
-      font-size: 1.1rem; margin-bottom: 20px; word-break: break-all;
+    /* Border tipis berkilau di sisi atas kartu */
+    .glass::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      background: linear-gradient(120deg, rgba(255,255,255,0.18), rgba(255,255,255,0.02) 30%, rgba(255,255,255,0) 60%, rgba(167,139,250,0.12));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      padding: 1px;
     }
-    button {
-      background: var(--accent); color: #000; border: none; padding: 10px 16px;
-      border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;
+    .glass-glow { box-shadow: 0 0 0 1px rgba(167,139,250,.25), 0 0 40px rgba(124,58,237,.18), 0 8px 32px rgba(0,0,0,.45); }
+
+    /* Aksen glowing */
+    .glow-text {
+      text-shadow: 0 0 14px rgba(167, 139, 250, 0.55), 0 0 40px rgba(124, 58, 237, 0.30);
+    }
+    .btn-glow { box-shadow: 0 0 18px rgba(124, 58, 237, 0.45), inset 0 1px 0 rgba(255,255,255,.15); }
+    .btn-glow:hover { box-shadow: 0 0 26px rgba(167, 139, 250, 0.65), inset 0 1px 0 rgba(255,255,255,.2); }
+
+    /* Tombol */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+      border-radius: .875rem; font-weight: 600; font-size: .875rem;
+      padding: .625rem 1rem; cursor: pointer; user-select: none;
+      transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease, color .2s ease;
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover { background: rgba(255,255,255,0.10); border-color: rgba(167,139,250,.4); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(.98); }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      border-color: rgba(167,139,250,.5);
+      color: #fff;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.5); color: #fca5a5; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-icon { padding: .55rem; border-radius: .75rem; }
+    .btn-icon svg { width: 1.05rem; height: 1.05rem; }
+
+    /* Input */
+    .input {
+      width: 100%; border-radius: .875rem; padding: .625rem .875rem; font-size: .875rem;
+      background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border); color: var(--text);
+      outline: none; transition: border-color .2s ease, box-shadow .2s ease;
+      -webkit-appearance: none; appearance: none;
+    }
+    .input:focus { border-color: rgba(167,139,250,.6); box-shadow: 0 0 0 3px rgba(124,58,237,.25); }
+    .input::placeholder { color: #6b7186; }
+    select.input option { background: #12141f; color: var(--text); }
+
+    /* Scrollbar kustom (WebKit) */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 8px; }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(124,58,237,.65), rgba(34,211,238,.45));
+      border-radius: 8px; border: 2px solid rgba(7,8,15,.9);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(167,139,250,.85), rgba(34,211,238,.65)); }
+    ::-webkit-scrollbar-corner { background: transparent; }
+    .scroll-area { scrollbar-width: thin; scrollbar-color: rgba(124,58,237,.65) rgba(255,255,255,0.03); overscroll-behavior: contain; }
+
+    /* Empty state */
+    @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .empty-float { animation: floatY 3.2s ease-in-out infinite; }
+    @keyframes pulseRing {
+      0% { transform: scale(.9); opacity: .7; }
+      70% { transform: scale(1.35); opacity: 0; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    .pulse-ring::after {
+      content: ''; position: absolute; inset: 0; border-radius: 9999px;
+      border: 2px solid rgba(167,139,250,.55); animation: pulseRing 2s ease-out infinite;
+    }
+    .live-dot { position: relative; }
+
+    /* Item inbox masuk */
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-item { animation: slideIn .35s ease both; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 50; display: none;
+      background: rgba(4,5,10,.7);
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; padding: 1rem;
+      overscroll-behavior: contain;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-backdrop.open .modal-card { animation: modalIn .28s cubic-bezier(.21,1.02,.73,1) both; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    /* Toast */
+    #toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(150%); z-index: 60;
+      transition: transform .3s cubic-bezier(.21,1.02,.73,1); }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Skeleton loading */
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.05) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: .5rem; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Spin */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinning svg { animation: spin 1s linear infinite; }
+
+    /* Status pill */
+    .pill { display: inline-flex; align-items: center; gap: .375rem; font-size: .7rem; font-weight: 600;
+      padding: .2rem .55rem; border-radius: 9999px; border: 1px solid var(--glass-border); }
+    .pill-google { color: #7dd3fc; border-color: rgba(125,211,252,.3); background: rgba(125,211,252,.08); }
+    .pill-microsoft { color: #fdba74; border-color: rgba(253,186,116,.3); background: rgba(253,186,116,.08); }
+    .pill-other { color: #c4b5fd; border-color: rgba(196,181,253,.3); background: rgba(196,181,253,.08); }
+
+    /* Viewer iframe */
+    #msgFrame { width: 100%; height: min(58vh, 26rem); border: 0; background: #fff; border-radius: .75rem; }
+
+    /* Mobile: kartu penuh, padding rapat */
+    @media (max-width: 640px) {
+      .glass { border-radius: 1rem; }
+      .btn { padding: .55rem .8rem; }
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>DarkGlass Mail</h1>
-    <div class="email-box" id="emailDisplay">Memuat email...</div>
-    <button onclick="location.reload()">Buat Email Baru</button>
+<body class="antialiased">
+
+  <div class="bg-aurora">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
   </div>
-  <script>
-    fetch('/api/domains')
-      .then(r => r.json())
-      .then(data => {
-        if(data.success && data.domains.length) {
-          document.getElementById('emailDisplay').innerText = 'user_' + Math.floor(Math.random()*1000) + '@' + data.domains[0];
-        }
-      }).catch(() => document.getElementById('emailDisplay').innerText = 'Gagal memuat');
+
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+
+    <!-- ===== Header ===== -->
+    <header class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl glass glass-glow flex items-center justify-center btn-glow">
+          <i data-lucide="mail" class="w-5 h-5" style="color: var(--accent);"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-extrabold tracking-tight glow-text">DarkGlass <span style="color: var(--accent);">Mail</span></h1>
+          <p class="text-[11px] sm:text-xs" style="color: var(--text-dim);">Email Sementara &bull; Temp-Mail</p>
+        </div>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 text-xs" style="color: var(--text-dim);">
+        <span class="live-dot pulse-ring inline-block w-2 h-2 rounded-full" style="background:#34d399;"></span>
+        <span id="pollStatus">Memantau inbox…</span>
+      </div>
+    </header>
+
+    <!-- ===== Kartu Alamat Email Utama ===== -->
+    <section class="glass glass-glow p-5 sm:p-7 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold uppercase tracking-widest" style="color: var(--text-dim);">Alamat Email Sementara</h2>
+        <span id="providerPill" class="pill pill-other"><i data-lucide="globe" class="w-3 h-3"></i><span id="providerText">—</span></span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-5">
+        <div class="flex-1 min-w-0 rounded-xl px-4 py-3.5 flex items-center gap-3"
+             style="background: rgba(0,0,0,.35); border: 1px solid var(--glass-border-glow); box-shadow: inset 0 0 24px rgba(124,58,237,.08);">
+          <i data-lucide="at-sign" class="w-5 h-5 shrink-0" style="color: var(--accent);"></i>
+          <span id="emailDisplay" class="font-mono text-sm sm:text-base font-semibold truncate select-all">memuat…</span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="btnCopy" class="btn btn-primary btn-glow" title="Salin alamat">
+            <i data-lucide="copy" class="w-4 h-4"></i><span class="hidden xs:inline">Salin</span>
+          </button>
+          <button id="btnQR" class="btn" title="Tampilkan QR Code">
+            <i data-lucide="qr-code" class="w-4 h-4"></i><span class="hidden xs:inline">QR</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Toolbar aksi -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btnRefresh" class="btn" title="Muat ulang inbox">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Muat Ulang
+        </button>
+        <button id="btnEdit" class="btn" title="Ubah nama / email kustom">
+          <i data-lucide="pencil" class="w-4 h-4"></i> Ubah Nama
+        </button>
+        <button id="btnNew" class="btn" title="Buat email baru">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> Buat Email Baru
+        </button>
+        <button id="btnDelete" class="btn btn-danger" title="Hapus email ini">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+        </button>
+        <span class="ml-auto text-[11px]" style="color: var(--text-dim);">
+          <span id="lastCheck">Belum pernah diperiksa</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ===== Kartu Inbox ===== -->
+    <section class="glass p-5 sm:p-7 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold uppercase tracking-widest flex items-center gap-2" style="color: var(--text-dim);">
+          <i data-lucide="inbox" class="w-4 h-4" style="color: var(--accent-2);"></i> Kotak Masuk
+          <span id="inboxCount" class="pill" style="color: var(--accent-2); border-color: rgba(34,211,238,.3);">0</span>
+        </h2>
+        <div class="flex items-center gap-2 text-xs sm:hidden" style="color: var(--text-dim);">
+          <span class="live-dot pulse-ring inline-block w-2 h-2 rounded-full" style="background:#34d399;"></span>
+          <span id="pollStatusM">Live</span>
+        </div>
+      </div>
+
+      <div id="inboxList" class="scroll-area space-y-2 overflow-y-auto pr-1" style="max-height: 24rem;">
+        <!-- diisi JavaScript -->
+      </div>
+
+      <!-- Empty state interaktif -->
+      <div id="emptyState" class="py-12 text-center">
+        <div class="relative w-20 h-20 mx-auto mb-5 empty-float">
+          <div class="absolute inset-0 rounded-full" style="background: radial-gradient(circle, rgba(124,58,237,.35), transparent 70%);"></div>
+          <div class="relative w-20 h-20 rounded-full glass flex items-center justify-center">
+            <i data-lucide="mail-open" class="w-9 h-9" style="color: var(--accent);"></i>
+          </div>
+        </div>
+        <p class="font-semibold mb-1">Belum ada pesan masuk</p>
+        <p class="text-xs sm:text-sm max-w-xs mx-auto" style="color: var(--text-dim);">
+          Gunakan alamat di atas untuk mendaftar ke situs apa pun. Pesan baru akan muncul di sini secara otomatis dalam hitungan detik.
+        </p>
+        <div class="mt-5 inline-flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-full" style="border:1px solid var(--glass-border); color: var(--text-dim); background: rgba(255,255,255,.03);">
+          <span class="live-dot pulse-ring inline-block w-1.5 h-1.5 rounded-full" style="background:#34d399;"></span>
+          Menunggu pesan pertama…
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Info singkat ===== -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div class="glass p-5">
+        <i data-lucide="shield-check" class="w-5 h-5 mb-2" style="color: var(--accent);"></i>
+        <p class="font-semibold text-sm mb-1">Privasi Terjaga</p>
+        <p class="text-xs" style="color: var(--text-dim);">Alamat email aslimu tidak pernah dibagikan ke layanan pihak ketiga.</p>
+      </div>
+      <div class="glass p-5">
+        <i data-lucide="zap" class="w-5 h-5 mb-2" style="color: var(--accent-2);"></i>
+        <p class="font-semibold text-sm mb-1">Real-time</p>
+        <p class="text-xs" style="color: var(--text-dim);">Inbox diperiksa otomatis setiap 5 detik tanpa perlu memuat ulang halaman.</p>
+      </div>
+      <div class="glass p-5">
+        <i data-lucide="scan-line" class="w-5 h-5 mb-2" style="color: #f472b6;"></i>
+        <p class="font-semibold text-sm mb-1">QR Code</p>
+        <p class="text-xs" style="color: var(--text-dim);">Pindai alamat langsung ke smartphone lewat fitur QR.</p>
+      </div>
+    </section>
+
+    <footer class="text-center text-[11px] pb-4" style="color: var(--text-dim);">
+      DarkGlass Mail &copy; 2026 &mdash; Email sementara hanya untuk keperluan verifikasi. Jangan dipakai untuk akun penting.
+    </footer>
+  </div>
+
+  <!-- ===== Modal: Email Kustom (Ubah Nama) ===== -->
+  <div id="modalEdit" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card glass glass-glow w-full max-w-md p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold flex items-center gap-2"><i data-lucide="pencil" class="w-4 h-4" style="color: var(--accent);"></i> Ubah Nama Email</h3>
+        <button class="btn btn-icon" data-close="modalEdit" aria-label="Tutup"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <label class="block text-xs mb-1.5" style="color: var(--text-dim);">Username kustom</label>
+      <input id="editUsername" class="input font-mono mb-4" placeholder="mis. budi.keren" autocomplete="off" spellcheck="false" />
+      <label class="block text-xs mb-1.5" style="color: var(--text-dim);">Domain</label>
+      <select id="editDomain" class="input font-mono mb-5"></select>
+      <div class="flex gap-2 justify-end">
+        <button class="btn" data-close="modalEdit">Batal</button>
+        <button id="btnEditSave" class="btn btn-primary btn-glow"><i data-lucide="check" class="w-4 h-4"></i> Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: QR Code ===== -->
+  <div id="modalQR" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card glass glass-glow w-full max-w-sm p-6 text-center">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold flex items-center gap-2"><i data-lucide="qr-code" class="w-4 h-4" style="color: var(--accent);"></i> QR Code</h3>
+        <button class="btn btn-icon" data-close="modalQR" aria-label="Tutup"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div id="qrBox" class="mx-auto mb-4 p-4 rounded-2xl inline-block" style="background:#fff;"></div>
+      <p id="qrAddress" class="font-mono text-xs break-all mb-5" style="color: var(--text-dim);"></p>
+      <button id="btnQRDownload" class="btn btn-primary btn-glow w-full"><i data-lucide="download" class="w-4 h-4"></i> Unduh QR</button>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Isi Pesan ===== -->
+  <div id="modalMsg" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card glass glass-glow w-full max-w-2xl p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div class="min-w-0">
+          <h3 id="msgSubject" class="font-bold truncate">—</h3>
+          <p id="msgFrom" class="text-xs mt-0.5 truncate" style="color: var(--text-dim);"></p>
+        </div>
+        <button class="btn btn-icon shrink-0" data-close="modalMsg" aria-label="Tutup"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="rounded-xl overflow-hidden" style="border:1px solid var(--glass-border);">
+        <iframe id="msgFrame" sandbox="allow-same-origin" title="Isi pesan"></iframe>
+      </div>
+      <div id="msgAttachments" class="mt-3 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div id="toast" class="glass px-4 py-2.5 text-sm font-medium flex items-center gap-2">
+    <i data-lucide="check-circle-2" class="w-4 h-4" style="color: #34d399;"></i>
+    <span id="toastText">OK</span>
+  </div>
+
+  <script type="module">
+    // ================= State =================
+    const LS_KEY = 'darkglass_account';
+    let account = null;      // { address, username, domain, timestamp, key, cookie }
+    let domains = [];
+    let polling = null;
+
+    // ================= Util =================
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    function toast(text, ok = true) {
+      $('toastText').textContent = text;
+      const icon = $('toast').querySelector('svg, i');
+      $('toast').classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => $('toast').classList.remove('show'), 2200);
+    }
+
+    function icons() { if (window.lucide) lucide.createIcons(); }
+
+    function timeAgo(ts) {
+      const d = Math.floor(Date.now() / 1000) - Number(ts || 0);
+      if (d < 60) return 'baru saja';
+      if (d < 3600) return Math.floor(d / 60) + ' mnt lalu';
+      if (d < 86400) return Math.floor(d / 3600) + ' jam lalu';
+      return Math.floor(d / 86400) + ' hari lalu';
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...opts
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    }
+
+    // ================= Penyimpanan =================
+    function loadAccount() {
+      try { account = JSON.parse(localStorage.getItem(LS_KEY)); } catch { account = null; }
+    }
+    function saveAccount() {
+      account ? localStorage.setItem(LS_KEY, JSON.stringify(account)) : localStorage.removeItem(LS_KEY);
+    }
+
+    // ================= Render alamat =================
+    function renderAddress() {
+      const pillMap = { google: 'pill-google', microsoft: 'pill-microsoft', other: 'pill-other' };
+      const pill = $('providerPill');
+      pill.classList.remove('pill-google', 'pill-microsoft', 'pill-other');
+      pill.classList.add(pillMap[account?.provider] || 'pill-other');
+      $('providerText').textContent = account?.provider === 'google' ? 'Gmail' :
+        account?.provider === 'microsoft' ? 'Outlook' : account?.domain || '—';
+      $('emailDisplay').textContent = account?.address || 'belum ada email';
+    }
+
+    // ================= Inbox =================
+    function renderInbox(messages) {
+      const list = $('inboxList');
+      const empty = $('emptyState');
+      $('inboxCount').textContent = messages.length;
+
+      if (!messages.length) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        icons();
+        return;
+      }
+      empty.classList.add('hidden');
+
+      list.innerHTML = messages.map((m, i) => `
+        <button class="msg-item w-full text-left rounded-xl p-3.5 flex items-start gap-3 transition hover:border-[rgba(167,139,250,.4)]"
+                style="background: rgba(255,255,255,.04); border: 1px solid var(--glass-border); animation-delay:${i * 0.05}s"
+                data-mid="${esc(m.mid)}">
+          <span class="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center" style="background: rgba(124,58,237,.18); border:1px solid rgba(167,139,250,.25);">
+            <i data-lucide="mail" class="w-4 h-4" style="color: var(--accent);"></i>
+          </span>
+          <span class="min-w-0 flex-1">
+            <span class="flex items-baseline justify-between gap-2">
+              <span class="font-semibold text-sm truncate">${esc(m.subject || m.from || '(tanpa subjek)')}</span>
+              <span class="text-[10px] shrink-0" style="color: var(--text-dim);">${esc(timeAgo(m.received_at || m.timestamp))}</span>
+            </span>
+            <span class="block text-xs truncate mt-0.5" style="color: var(--text-dim);">${esc(m.from || m.text || 'Klik untuk membuka pesan')}</span>
+          </span>
+        </button>
+      `).join('');
+
+      list.querySelectorAll('[data-mid]').forEach(el => {
+        el.addEventListener('click', () => openMessage(el.dataset.mid));
+      });
+      icons();
+    }
+
+    async function refreshInbox(showToast = false) {
+      if (!account) return;
+      const btn = $('btnRefresh');
+      btn.classList.add('spinning');
+      try {
+        const res = await api('/api/inbox', { method: 'POST', body: JSON.stringify({ account }) });
+        renderInbox(res.messages || []);
+        $('lastCheck').textContent = 'Diperiksa ' + new Date().toLocaleTimeString('id-ID');
+        if (showToast) toast(res.total ? `${res.total} pesan ditemukan` : 'Tidak ada pesan baru');
+      } catch (e) {
+        $('lastCheck').textContent = 'Gagal: ' + e.message;
+        if (showToast) toast('Gagal memuat inbox: ' + e.message, false);
+      } finally {
+        btn.classList.remove('spinning');
+      }
+    }
+
+    function startPolling() {
+      clearInterval(polling);
+      polling = setInterval(() => refreshInbox(false), 5000); // polling tiap ~5 detik
+    }
+
+    // ================= Isi pesan =================
+    async function openMessage(mid) {
+      try {
+        const res = await api('/api/message', { method: 'POST', body: JSON.stringify({ account, mid }) });
+        $('msgSubject').textContent = res.subject || '(tanpa subjek)';
+        $('msgFrom').textContent = res.from || '';
+        const doc = $('msgFrame').contentDocument;
+        doc.open(); doc.write('<base target="_blank"><body style="margin:0;padding:16px;font-family:sans-serif;color:#111;background:#fff">' + (res.body || '<i>(pesan kosong)</i>') + '</body>'); doc.close();
+        const atts = res.attachments || [];
+        $('msgAttachments').innerHTML = atts.length ? atts.map(a => `
+          <div class="flex items-center gap-2 text-xs rounded-lg px-3 py-2" style="background: rgba(255,255,255,.05); border:1px solid var(--glass-border);">
+            <i data-lucide="paperclip" class="w-3.5 h-3.5" style="color: var(--accent-2);"></i>
+            <span class="truncate">${esc(a.name || a.filename || 'lampiran')}</span>
+          </div>`).join('') : '';
+        openModal('modalMsg');
+        icons();
+      } catch (e) {
+        toast('Gagal membuka pesan: ' + e.message, false);
+      }
+    }
+
+    // ================= Modal =================
+    function openModal(id) { $(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeModal(id) { $(id).classList.remove('open'); document.body.style.overflow = ''; }
+    document.querySelectorAll('[data-close]').forEach(el =>
+      el.addEventListener('click', () => closeModal(el.dataset.close)));
+    document.querySelectorAll('.modal-backdrop').forEach(el =>
+      el.addEventListener('click', (e) => { if (e.target === el) closeModal(el.id); }));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.open').forEach(m => closeModal(m.id));
+    });
+
+    // ================= Aksi utama =================
+    async function createNew(username = 'random', domain = 'random') {
+      const disp = $('emailDisplay');
+      disp.textContent = 'membuat email…';
+      try {
+        const res = await api('/api/create', { method: 'POST', body: JSON.stringify({ username, domain }) });
+        account = res;
+        saveAccount();
+        renderAddress();
+        toast('Email baru berhasil dibuat');
+        renderInbox([]);
+        refreshInbox(false);
+      } catch (e) {
+        disp.textContent = account?.address || 'gagal';
+        toast('Gagal membuat email: ' + e.message, false);
+      }
+    }
+
+    async function loadDomains() {
+      try {
+        const res = await api('/api/domains');
+        domains = res.domains?.all || [];
+      } catch { domains = []; }
+      const sel = $('editDomain');
+      sel.innerHTML = domains.map(d => `<option value="${esc(d)}" ${d === account?.domain ? 'selected' : ''}>@${esc(d)}</option>`).join('')
+        || '<option value="random">Acak</option>';
+    }
+
+    // -- Salin --
+    $('btnCopy').addEventListener('click', async () => {
+      if (!account) return toast('Belum ada email', false);
+      try {
+        await navigator.clipboard.writeText(account.address);
+        toast('Alamat disalin');
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = account.address; document.body.appendChild(ta);
+        ta.select(); document.execCommand('copy'); ta.remove();
+        toast('Alamat disalin');
+      }
+    });
+
+    // -- Muat ulang --
+    $('btnRefresh').addEventListener('click', () => refreshInbox(true));
+
+    // -- Ubah nama --
+    $('btnEdit').addEventListener('click', () => {
+      if (!account) return toast('Buat email dulu', false);
+      $('editUsername').value = account.username || '';
+      loadDomains();
+      openModal('modalEdit');
+    });
+    $('btnEditSave').addEventListener('click', () => {
+      const username = $('editUsername').value.trim();
+      const domain = $('editDomain').value || 'random';
+      if (!username) return toast('Username tidak boleh kosong', false);
+      closeModal('modalEdit');
+      createNew(username, domain);
+    });
+
+    // -- Buat baru --
+    $('btnNew').addEventListener('click', () => createNew('random', 'random'));
+
+    // -- Hapus --
+    $('btnDelete').addEventListener('click', () => {
+      if (!account) return toast('Belum ada email', false);
+      account = null;
+      saveAccount();
+      renderInbox([]);
+      $('emailDisplay').textContent = 'belum ada email';
+      $('providerText').textContent = '—';
+      $('lastCheck').textContent = 'Belum pernah diperiksa';
+      toast('Email dihapus. Buat yang baru ya.');
+    });
+
+    // -- QR --
+    let qrObj = null;
+    $('btnQR').addEventListener('click', () => {
+      if (!account) return toast('Buat email dulu', false);
+      $('qrBox').innerHTML = '';
+      qrObj = new QRCode($('qrBox'), {
+        text: account.address,
+        width: 192, height: 192,
+        colorDark: '#12141f', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      $('qrAddress').textContent = account.address;
+      openModal('modalQR');
+    });
+    $('btnQRDownload').addEventListener('click', () => {
+      const img = $('qrBox').querySelector('img') || $('qrBox').querySelector('canvas');
+      if (!img) return;
+      const url = img.tagName === 'CANVAS' ? img.toDataURL('image/png') : img.src;
+      const a = document.createElement('a');
+      a.href = url; a.download = 'darkglass-qr.png'; a.click();
+      toast('QR diunduh');
+    });
+
+    // ================= Init =================
+    (async function init() {
+      icons();
+      loadAccount();
+      if (account) {
+        renderAddress();
+        refreshInbox(false);
+        startPolling();
+      } else {
+        $('emailDisplay').textContent = 'belum ada email — klik Buat Email Baru';
+        createNew('random', 'random').then(startPolling);
+      }
+      loadDomains();
+    })();
   </script>
 </body>
 </html>
